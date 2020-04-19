@@ -243,12 +243,21 @@ class Processor:
 
 
 class SequenceClassifier(Transformer):
-    def __init__(self, model_name="bert-base-cased", num_labels=2, cache_dir="."):
+    def __init__(
+        self,
+        model_name="bert-base-cased",
+        num_labels=2,
+        cache_dir=".",
+        config=None,
+        load_model_from_config=None,
+    ):
         super().__init__(
             model_class=MODEL_CLASS,
             model_name=model_name,
             num_labels=num_labels,
             cache_dir=cache_dir,
+            config=config,
+            load_model_from_config=load_model_from_config,
         )
 
     @staticmethod
@@ -345,7 +354,9 @@ class SequenceClassifier(Transformer):
 
         # init scheduler
         scheduler = Transformer.get_default_scheduler(
-            optimizer=self.optimizer, warmup_steps=warmup_steps, num_training_steps=max_steps
+            optimizer=self.optimizer,
+            warmup_steps=warmup_steps,
+            num_training_steps=max_steps,
         )
 
         # fine tune

@@ -52,7 +52,9 @@ class Transformer:
         model_name="bert-base-cased",
         num_labels=2,
         cache_dir=".",
+        config=None,
         load_model_from_dir=None,
+        load_model_from_config=None,
     ):
 
         if model_name not in self.list_supported_models():
@@ -66,12 +68,15 @@ class Transformer:
         self.cache_dir = cache_dir
         self.load_model_from_dir = load_model_from_dir
         if load_model_from_dir is None:
-            self.model = model_class[model_name].from_pretrained(
-                model_name,
-                cache_dir=cache_dir,
-                num_labels=num_labels,
-                output_loading_info=False,
-            )
+            if load_model_from_config is None:
+                self.model = model_class[model_name].from_pretrained(
+                    model_name,
+                    cache_dir=cache_dir,
+                    num_labels=num_labels,
+                    output_loading_info=False,
+                )
+            else:
+                self.model = model_class[model_name](config)
         else:
             logger.info("Loading cached model from {}".format(load_model_from_dir))
             self.model = model_class[model_name].from_pretrained(
@@ -241,7 +246,8 @@ class Transformer:
                 if isinstance(outputs, tuple):
                     loss = outputs[0]
                 else:
-                    # Accomondate models based on older versions of Transformers, e.g. UniLM
+                    # Accomondate models based on older versions of Transformers,
+                    # e.g. UniLM
                     loss = outputs
 
                 if num_gpus > 1:
@@ -278,9 +284,10 @@ class Transformer:
                         endtime_string = datetime.datetime.fromtimestamp(end).strftime(
                             "%d/%m/%Y %H:%M:%S"
                         )
-                        log_line = """timestamp: {0:s}, average loss: {1:.6f}, time duration: {2:f},
-                            number of examples in current reporting: {3:.0f}, step {4:.0f}
-                            out of total {5:.0f}""".format(
+                        log_line = """timestamp: {0:s}, average loss: {1:.6f},
+                            time duration: {2:f}, number of examples in current
+                            reporting: {3:.0f}, step {4:.0f} out of total {5:.0f}
+                            """.format(
                             endtime_string,
                             accum_loss / report_every,
                             end - start,
@@ -327,7 +334,7 @@ class Transformer:
                     break
         if fp16 and amp:
             self.amp_state_dict = amp.state_dict()
-        
+
         # release GPU memories
         self.model.cpu()
         torch.cuda.empty_cache()
